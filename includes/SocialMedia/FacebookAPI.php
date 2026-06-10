@@ -7,7 +7,7 @@ class FacebookAPI
     public static function getAuthUrl(): string
     {
         $params = http_build_query([
-            'client_id' => FACEBOOK_APP_ID,
+            'client_id' => get_api_setting('facebook_app_id'),
             'redirect_uri' => FACEBOOK_REDIRECT_URI,
             'scope' => 'pages_manage_posts,pages_read_engagement,pages_show_list',
             'response_type' => 'code',
@@ -19,8 +19,8 @@ class FacebookAPI
     public static function exchangeCode(string $code): array
     {
         $url = self::GRAPH_URL . '/oauth/access_token?' . http_build_query([
-            'client_id' => FACEBOOK_APP_ID,
-            'client_secret' => FACEBOOK_APP_SECRET,
+            'client_id' => get_api_setting('facebook_app_id'),
+            'client_secret' => get_api_setting('facebook_app_secret'),
             'redirect_uri' => FACEBOOK_REDIRECT_URI,
             'code' => $code,
         ]);
@@ -32,8 +32,8 @@ class FacebookAPI
     {
         $url = self::GRAPH_URL . '/oauth/access_token?' . http_build_query([
             'grant_type' => 'fb_exchange_token',
-            'client_id' => FACEBOOK_APP_ID,
-            'client_secret' => FACEBOOK_APP_SECRET,
+            'client_id' => get_api_setting('facebook_app_id'),
+            'client_secret' => get_api_setting('facebook_app_secret'),
             'fb_exchange_token' => $shortToken,
         ]);
 

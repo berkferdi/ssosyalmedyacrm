@@ -8,7 +8,7 @@ class LinkedInAPI
     {
         $params = http_build_query([
             'response_type' => 'code',
-            'client_id' => LINKEDIN_CLIENT_ID,
+            'client_id' => get_api_setting('linkedin_client_id'),
             'redirect_uri' => LINKEDIN_REDIRECT_URI,
             'scope' => 'r_organization_social w_organization_social rw_organization_admin',
             'state' => Security::generateCSRFToken(),
@@ -26,8 +26,8 @@ class LinkedInAPI
                 'grant_type' => 'authorization_code',
                 'code' => $code,
                 'redirect_uri' => LINKEDIN_REDIRECT_URI,
-                'client_id' => LINKEDIN_CLIENT_ID,
-                'client_secret' => LINKEDIN_CLIENT_SECRET,
+                'client_id' => get_api_setting('linkedin_client_id'),
+                'client_secret' => get_api_setting('linkedin_client_secret'),
             ]),
         ]);
         $response = curl_exec($ch);

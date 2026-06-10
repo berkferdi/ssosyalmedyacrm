@@ -7,8 +7,26 @@ class OpenAI
 
     public function __construct()
     {
-        $this->apiKey = OPENAI_API_KEY;
-        $this->model = OPENAI_MODEL;
+        $this->apiKey = get_api_setting('openai_api_key');
+        $this->model = get_api_setting('openai_model') ?: (defined('OPENAI_MODEL') ? OPENAI_MODEL : 'gpt-4o-mini');
+    }
+
+    public function testConnection(): array
+    {
+        if (empty($this->apiKey)) {
+            return ['success' => false, 'message' => 'OpenAI API anahtarı tanımlı değil. Ayarlar sayfasından kaydedin.'];
+        }
+
+        try {
+            $this->request([
+                'model' => $this->model,
+                'messages' => [['role' => 'user', 'content' => 'Merhaba']],
+                'max_tokens' => 5,
+            ]);
+            return ['success' => true, 'message' => 'OpenAI bağlantısı başarılı. Model: ' . $this->model];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     public function generateContent(string $imageDescription, ?string $context = null): array
@@ -122,10 +140,17 @@ class OpenAI
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            throw new Exception('OpenAI API error: HTTP ' . $httpCode);
+            $body = json_decode($response, true);
+            $errorMsg = $body['error']['message'] ?? substr((string) $response, 0, 200);
+            throw new Exception('OpenAI API hatası (HTTP ' . $httpCode . '): ' . $errorMsg);
         }
 
-        return json_decode($response, true);
+        $decoded = json_decode($response, true);
+        if (!$decoded) {
+            throw new Exception('OpenAI API geçersiz yanıt döndürdü');
+        }
+
+        return $decoded;
     }
 
     private function fallbackContent(string $description): array

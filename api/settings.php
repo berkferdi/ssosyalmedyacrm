@@ -47,6 +47,72 @@ switch ($action) {
         Security::jsonResponse(['success' => true]);
         break;
 
+    case 'save_api_keys':
+        if (!Auth::hasRole('super_admin')) {
+            Security::jsonResponse(['success' => false, 'message' => 'Yetkiniz yok'], 403);
+        }
+
+        $secretFields = ['openai_api_key', 'facebook_app_secret', 'linkedin_client_secret'];
+        $textFields = [
+            'openai_api_key', 'openai_model',
+            'facebook_app_id', 'facebook_app_secret',
+            'linkedin_client_id', 'linkedin_client_secret',
+        ];
+
+        $saved = [];
+        foreach ($textFields as $field) {
+            $value = trim($_POST[$field] ?? '');
+            if ($value === '' && in_array($field, $secretFields, true)) {
+                continue;
+            }
+            if ($value !== '') {
+                set_system_setting($field, $value);
+                $saved[] = $field;
+            }
+        }
+
+        if (empty($saved)) {
+            Security::jsonResponse(['success' => false, 'message' => 'Kaydedilecek bir değer girilmedi']);
+        }
+
+        Security::jsonResponse(['success' => true, 'message' => 'API ayarları kaydedildi', 'saved' => $saved]);
+        break;
+
+    case 'test_openai':
+        if (!Auth::hasRole('super_admin')) {
+            Security::jsonResponse(['success' => false, 'message' => 'Yetkiniz yok'], 403);
+        }
+
+        $newKey = trim($_POST['openai_api_key'] ?? '');
+        if ($newKey !== '') {
+            set_system_setting('openai_api_key', $newKey);
+        }
+
+        require_once INCLUDES_PATH . '/OpenAI.php';
+        $result = (new OpenAI())->testConnection();
+        Security::jsonResponse($result, $result['success'] ? 200 : 400);
+        break;
+
+    case 'get_api_keys':
+        if (!Auth::hasRole('super_admin')) {
+            Security::jsonResponse(['success' => false, 'message' => 'Yetkiniz yok'], 403);
+        }
+
+        $openaiKey = get_api_setting('openai_api_key');
+        Security::jsonResponse([
+            'success' => true,
+            'settings' => [
+                'openai_api_key_set' => $openaiKey !== '',
+                'openai_api_key_masked' => $openaiKey ? mask_api_key($openaiKey) : '',
+                'openai_model' => get_api_setting('openai_model') ?: (defined('OPENAI_MODEL') ? OPENAI_MODEL : 'gpt-4o-mini'),
+                'facebook_app_id' => get_api_setting('facebook_app_id'),
+                'facebook_app_secret_set' => get_api_setting('facebook_app_secret') !== '',
+                'linkedin_client_id' => get_api_setting('linkedin_client_id'),
+                'linkedin_client_secret_set' => get_api_setting('linkedin_client_secret') !== '',
+            ],
+        ]);
+        break;
+
     default:
         Security::jsonResponse(['success' => false, 'message' => 'Geçersiz işlem'], 400);
 }

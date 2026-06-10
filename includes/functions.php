@@ -50,6 +50,52 @@ function set_setting(string $key, $value, ?int $userId = null): void
     }
 }
 
+function get_system_setting(string $key, $default = null)
+{
+    $setting = Database::fetch(
+        'SELECT setting_value FROM settings WHERE setting_key = ? AND user_id IS NULL',
+        [$key]
+    );
+    return ($setting && $setting['setting_value'] !== '') ? $setting['setting_value'] : $default;
+}
+
+function set_system_setting(string $key, $value): void
+{
+    set_setting($key, $value, null);
+}
+
+function get_api_setting(string $key): string
+{
+    $dbValue = get_system_setting($key, '');
+    if ($dbValue !== '' && $dbValue !== null) {
+        return (string) $dbValue;
+    }
+
+    $constantMap = [
+        'openai_api_key' => 'OPENAI_API_KEY',
+        'openai_model' => 'OPENAI_MODEL',
+        'facebook_app_id' => 'FACEBOOK_APP_ID',
+        'facebook_app_secret' => 'FACEBOOK_APP_SECRET',
+        'linkedin_client_id' => 'LINKEDIN_CLIENT_ID',
+        'linkedin_client_secret' => 'LINKEDIN_CLIENT_SECRET',
+    ];
+
+    if (isset($constantMap[$key]) && defined($constantMap[$key])) {
+        $value = constant($constantMap[$key]);
+        return $value ? (string) $value : '';
+    }
+
+    return '';
+}
+
+function mask_api_key(string $key): string
+{
+    if (strlen($key) <= 8) {
+        return '••••••••';
+    }
+    return substr($key, 0, 7) . '...' . substr($key, -4);
+}
+
 function format_file_size(int $bytes): string
 {
     $units = ['B', 'KB', 'MB', 'GB'];
