@@ -158,6 +158,7 @@ class OpenAI
         $clean = Security::sanitize($description);
         return [
             'success' => true,
+            'fallback' => true,
             'title' => ucfirst($clean),
             'description' => "{$clean} hakkında detaylı bilgi için bizi takip edin.",
             'hashtags' => '#sosyalmedya #içerik #paylaşım',

@@ -19,6 +19,9 @@ switch ($action) {
             Security::jsonResponse(['success' => false, 'message' => 'Açıklama gerekli']);
         }
         $result = $openai->generateContent($description, $context);
+        if (!empty($result['fallback']) && empty(get_api_setting('openai_api_key'))) {
+            $result['message'] = 'OpenAI API anahtarı tanımlı değil. Ayarlar sayfasından ekleyin.';
+        }
         Security::jsonResponse($result);
         break;
 
