@@ -9,9 +9,9 @@ class LinkedInAPI
         $params = http_build_query([
             'response_type' => 'code',
             'client_id' => get_api_setting('linkedin_client_id'),
-            'redirect_uri' => LINKEDIN_REDIRECT_URI,
+            'redirect_uri' => oauth_redirect_uri('linkedin'),
             'scope' => 'r_organization_social w_organization_social rw_organization_admin',
-            'state' => Security::generateCSRFToken(),
+            'state' => oauth_state_create(),
         ]);
         return 'https://www.linkedin.com/oauth/v2/authorization?' . $params;
     }
@@ -25,7 +25,7 @@ class LinkedInAPI
             CURLOPT_POSTFIELDS => http_build_query([
                 'grant_type' => 'authorization_code',
                 'code' => $code,
-                'redirect_uri' => LINKEDIN_REDIRECT_URI,
+                'redirect_uri' => oauth_redirect_uri('linkedin'),
                 'client_id' => get_api_setting('linkedin_client_id'),
                 'client_secret' => get_api_setting('linkedin_client_secret'),
             ]),

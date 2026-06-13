@@ -54,7 +54,7 @@ switch ($action) {
 
         $secretFields = ['openai_api_key', 'facebook_app_secret', 'linkedin_client_secret'];
         $textFields = [
-            'openai_api_key', 'openai_model',
+            'app_url', 'openai_api_key', 'openai_model',
             'facebook_app_id', 'facebook_app_secret',
             'linkedin_client_id', 'linkedin_client_secret',
         ];
@@ -64,6 +64,9 @@ switch ($action) {
             $value = trim($_POST[$field] ?? '');
             if ($value === '' && in_array($field, $secretFields, true)) {
                 continue;
+            }
+            if ($field === 'app_url' && $value !== '') {
+                $value = rtrim(force_https_url($value), '/');
             }
             if ($value !== '') {
                 set_system_setting($field, $value);

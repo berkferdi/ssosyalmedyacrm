@@ -2,26 +2,35 @@
 
 class FacebookAPI
 {
-    private const GRAPH_URL = 'https://graph.facebook.com/v19.0';
+    private const GRAPH_URL = 'https://graph.facebook.com/v21.0';
+    private const OAUTH_URL = 'https://www.facebook.com/v21.0/dialog/oauth';
 
-    public static function getAuthUrl(): string
+    public static function getAuthUrl(?string $redirectUri = null): string
     {
+        $appId = get_api_setting('facebook_app_id');
+        if ($appId === '') {
+            throw new RuntimeException('Facebook App ID tanımlı değil. Ayarlar sayfasından ekleyin.');
+        }
+
+        $redirectUri = $redirectUri ?? oauth_redirect_uri('facebook');
         $params = http_build_query([
-            'client_id' => get_api_setting('facebook_app_id'),
-            'redirect_uri' => FACEBOOK_REDIRECT_URI,
-            'scope' => 'pages_manage_posts,pages_read_engagement,pages_show_list',
+            'client_id' => $appId,
+            'redirect_uri' => $redirectUri,
+            'scope' => 'pages_manage_posts,pages_read_engagement,pages_show_list,public_profile',
             'response_type' => 'code',
-            'state' => Security::generateCSRFToken(),
+            'state' => oauth_state_create(),
         ]);
-        return 'https://www.facebook.com/v19.0/dialog/oauth?' . $params;
+
+        return self::OAUTH_URL . '?' . $params;
     }
 
-    public static function exchangeCode(string $code): array
+    public static function exchangeCode(string $code, ?string $redirectUri = null): array
     {
+        $redirectUri = $redirectUri ?? oauth_redirect_uri('facebook');
         $url = self::GRAPH_URL . '/oauth/access_token?' . http_build_query([
             'client_id' => get_api_setting('facebook_app_id'),
             'client_secret' => get_api_setting('facebook_app_secret'),
-            'redirect_uri' => FACEBOOK_REDIRECT_URI,
+            'redirect_uri' => $redirectUri,
             'code' => $code,
         ]);
 
@@ -42,7 +51,10 @@ class FacebookAPI
 
     public static function getPages(string $accessToken): array
     {
-        $url = self::GRAPH_URL . '/me/accounts?access_token=' . urlencode($accessToken);
+        $url = self::GRAPH_URL . '/me/accounts?' . http_build_query([
+            'fields' => 'id,name,access_token,instagram_business_account',
+            'access_token' => $accessToken,
+        ]);
         $response = self::request($url);
         return $response['data'] ?? [];
     }

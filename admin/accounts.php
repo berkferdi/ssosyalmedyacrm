@@ -11,6 +11,12 @@ $accounts = Database::fetchAll(
     [Auth::id()]
 );
 
+$fbAppId = get_api_setting('facebook_app_id');
+$fbSecret = get_api_setting('facebook_app_secret');
+$fbRedirect = oauth_redirect_uri('facebook');
+$igRedirect = oauth_redirect_uri('instagram');
+$siteUrl = app_url();
+
 $pageTitle = 'Sosyal Medya Hesapları';
 $currentPage = 'accounts';
 
@@ -24,15 +30,68 @@ include TEMPLATES_PATH . '/header.php';
             <i class="bi bi-plus-lg me-1"></i> Hesap Bağla
         </button>
         <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="<?= APP_URL ?>/api/oauth/facebook.php">
+            <li><a class="dropdown-item" href="<?= app_url() ?>/api/oauth/facebook.php">
                 <i class="bi bi-facebook text-primary me-2"></i>Facebook Sayfası</a></li>
-            <li><a class="dropdown-item" href="<?= APP_URL ?>/api/oauth/instagram.php">
+            <li><a class="dropdown-item" href="<?= app_url() ?>/api/oauth/instagram.php">
                 <i class="bi bi-instagram text-danger me-2"></i>Instagram Business</a></li>
-            <li><a class="dropdown-item" href="<?= APP_URL ?>/api/oauth/linkedin.php">
+            <li><a class="dropdown-item" href="<?= app_url() ?>/api/oauth/linkedin.php">
                 <i class="bi bi-linkedin text-info me-2"></i>LinkedIn Şirket</a></li>
             <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#wpModal">
                 <i class="bi bi-wordpress text-primary me-2"></i>WordPress Blog</a></li>
         </ul>
+    </div>
+</div>
+
+<?php if (!empty($_GET['error'])): ?>
+<div class="alert alert-danger alert-dismissible fade show">
+    <i class="bi bi-exclamation-triangle me-2"></i><?= Security::escape($_GET['error']) ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($_GET['connected'])): ?>
+<div class="alert alert-success alert-dismissible fade show">
+    <i class="bi bi-check-circle me-2"></i><?= Security::escape(ucfirst($_GET['connected'])) ?> hesabı başarıyla bağlandı.
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<?php endif; ?>
+
+<?php if (Auth::hasRole('super_admin') && ($fbAppId === '' || $fbSecret === '')): ?>
+<div class="alert alert-warning">
+    <strong>Meta API ayarları eksik.</strong>
+    <a href="<?= app_url() ?>/admin/settings.php">Ayarlar</a> sayfasından Facebook App ID ve App Secret girin.
+</div>
+<?php endif; ?>
+
+<div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0"><i class="bi bi-meta me-2"></i>Meta (Facebook / Instagram) Kurulum Rehberi</h6></div>
+    <div class="card-body">
+        <p class="text-muted mb-3">Facebook Developer Console'da aşağıdaki adresleri <strong>birebir</strong> ekleyin. Meta yalnızca <strong>HTTPS</strong> kabul eder.</p>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label small fw-bold">Facebook Redirect URI</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control font-monospace" id="fbRedirect" readonly value="<?= Security::escape($fbRedirect) ?>">
+                    <button class="btn btn-outline-secondary btn-copy" data-target="fbRedirect" type="button"><i class="bi bi-clipboard"></i></button>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label small fw-bold">Instagram Redirect URI</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control font-monospace" id="igRedirect" readonly value="<?= Security::escape($igRedirect) ?>">
+                    <button class="btn btn-outline-secondary btn-copy" data-target="igRedirect" type="button"><i class="bi bi-clipboard"></i></button>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <ol class="small mb-0">
+            <li><a href="https://developers.facebook.com/apps/" target="_blank">developers.facebook.com</a> → Uygulamanız → <strong>Facebook Login → Settings</strong></li>
+            <li><strong>Valid OAuth Redirect URIs</strong> alanına yukarıdaki 2 HTTPS adresini ekleyin</li>
+            <li><strong>App Settings → Basic</strong> → App Domains: <code><?= Security::escape(parse_url($siteUrl, PHP_URL_HOST)) ?></code></li>
+            <li>Instagram ürününü ekleyin → <strong>Instagram Graph API</strong> aktif olsun</li>
+            <li>Instagram hesabınız <strong>Business veya Creator</strong> olmalı ve bir Facebook sayfasına bağlı olmalı</li>
+            <li>Uygulama modu <strong>Live</strong> olmalı (Development modda sadece test kullanıcıları bağlanabilir)</li>
+        </ol>
     </div>
 </div>
 
@@ -111,6 +170,12 @@ include TEMPLATES_PATH . '/header.php';
 </div>
 
 <script>
+$('.btn-copy').on('click', function() {
+    const id = $(this).data('target');
+    const val = $('#' + id).val();
+    navigator.clipboard.writeText(val);
+    showToast('Kopyalandı: ' + val);
+});
 $('#wpConnectForm').on('submit', function(e) {
     e.preventDefault();
     apiRequest('/api/accounts.php', $(this).serialize() + '&action=connect_wordpress').done(function(res) {

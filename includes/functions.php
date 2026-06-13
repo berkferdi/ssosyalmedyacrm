@@ -96,6 +96,92 @@ function mask_api_key(string $key): string
     return substr($key, 0, 7) . '...' . substr($key, -4);
 }
 
+function is_localhost_host(?string $host): bool
+{
+    if (!$host) {
+        return true;
+    }
+    return in_array($host, ['localhost', '127.0.0.1', '::1'], true)
+        || str_ends_with($host, '.local');
+}
+
+function is_https_request(): bool
+{
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        return true;
+    }
+    if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https') {
+        return true;
+    }
+    if (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on') {
+        return true;
+    }
+    return !empty($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443;
+}
+
+function force_https_url(string $url): string
+{
+    $host = parse_url($url, PHP_URL_HOST);
+    if (str_starts_with($url, 'http://') && !is_localhost_host($host)) {
+        return 'https://' . substr($url, 7);
+    }
+    return $url;
+}
+
+function app_url(): string
+{
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+
+    try {
+        $configured = get_system_setting('app_url', '');
+        if ($configured !== '') {
+            $cached = rtrim(force_https_url($configured), '/');
+            return $cached;
+        }
+    } catch (Throwable $e) {
+        // DB henüz hazır olmayabilir
+    }
+
+    if (php_sapi_name() !== 'cli' && !empty($_SERVER['HTTP_HOST'])) {
+        $scheme = is_https_request() ? 'https' : 'http';
+        if (!is_localhost_host($_SERVER['HTTP_HOST'])) {
+            $scheme = 'https';
+        }
+        $cached = $scheme . '://' . $_SERVER['HTTP_HOST'];
+        return $cached;
+    }
+
+    $cached = rtrim(force_https_url(defined('APP_URL') ? APP_URL : ''), '/');
+    return $cached;
+}
+
+function oauth_redirect_uri(string $provider): string
+{
+    return match ($provider) {
+        'instagram' => app_url() . '/api/oauth/instagram.php',
+        'facebook' => app_url() . '/api/oauth/facebook.php',
+        'linkedin' => app_url() . '/api/oauth/linkedin.php',
+        default => app_url() . '/api/oauth/' . $provider . '.php',
+    };
+}
+
+function oauth_state_create(): string
+{
+    $state = Security::generateToken(16);
+    $_SESSION['oauth_state'] = $state;
+    return $state;
+}
+
+function oauth_state_validate(?string $state): bool
+{
+    $expected = $_SESSION['oauth_state'] ?? '';
+    unset($_SESSION['oauth_state']);
+    return $expected !== '' && hash_equals($expected, (string) $state);
+}
+
 function format_file_size(int $bytes): string
 {
     $units = ['B', 'KB', 'MB', 'GB'];

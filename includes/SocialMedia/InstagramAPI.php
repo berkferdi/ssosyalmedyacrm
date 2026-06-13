@@ -2,23 +2,47 @@
 
 class InstagramAPI
 {
-    private const GRAPH_URL = 'https://graph.facebook.com/v19.0';
+    private const GRAPH_URL = 'https://graph.facebook.com/v21.0';
+    private const OAUTH_URL = 'https://www.facebook.com/v21.0/dialog/oauth';
 
     public static function getAuthUrl(): string
     {
+        $appId = get_api_setting('facebook_app_id');
+        if ($appId === '') {
+            throw new RuntimeException('Facebook App ID tanımlı değil. Instagram için Meta uygulama ID\'si gereklidir.');
+        }
+
+        $redirectUri = oauth_redirect_uri('instagram');
         $params = http_build_query([
-            'client_id' => FACEBOOK_APP_ID,
-            'redirect_uri' => FACEBOOK_REDIRECT_URI . '?platform=instagram',
-            'scope' => 'instagram_basic,instagram_content_publish,pages_show_list',
+            'client_id' => $appId,
+            'redirect_uri' => $redirectUri,
+            'scope' => 'instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement,public_profile',
             'response_type' => 'code',
-            'state' => Security::generateCSRFToken(),
+            'state' => oauth_state_create(),
         ]);
-        return 'https://www.facebook.com/v19.0/dialog/oauth?' . $params;
+
+        return self::OAUTH_URL . '?' . $params;
+    }
+
+    public static function exchangeCode(string $code): array
+    {
+        $redirectUri = oauth_redirect_uri('instagram');
+        $url = self::GRAPH_URL . '/oauth/access_token?' . http_build_query([
+            'client_id' => get_api_setting('facebook_app_id'),
+            'client_secret' => get_api_setting('facebook_app_secret'),
+            'redirect_uri' => $redirectUri,
+            'code' => $code,
+        ]);
+
+        return self::request($url);
     }
 
     public static function getBusinessAccounts(string $pageId, string $accessToken): array
     {
-        $url = self::GRAPH_URL . "/{$pageId}?fields=instagram_business_account&access_token=" . urlencode($accessToken);
+        $url = self::GRAPH_URL . "/{$pageId}?" . http_build_query([
+            'fields' => 'instagram_business_account{id,username}',
+            'access_token' => $accessToken,
+        ]);
         return self::request($url);
     }
 

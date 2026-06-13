@@ -80,7 +80,7 @@ function publishToPlatform(array $post): array
 
     $imageUrl = null;
     if ($post['media_path']) {
-        $imageUrl = APP_URL . '/uploads/' . $post['media_path'];
+        $imageUrl = app_url() . '/uploads/' . $post['media_path'];
     }
 
     return match ($post['platform']) {

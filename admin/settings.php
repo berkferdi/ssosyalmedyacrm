@@ -10,6 +10,8 @@ $openaiKey = Auth::hasRole('super_admin') ? get_api_setting('openai_api_key') : 
 $openaiModel = Auth::hasRole('super_admin') ? (get_api_setting('openai_model') ?: (defined('OPENAI_MODEL') ? OPENAI_MODEL : 'gpt-4o-mini')) : '';
 $facebookAppId = Auth::hasRole('super_admin') ? get_api_setting('facebook_app_id') : '';
 $linkedinClientId = Auth::hasRole('super_admin') ? get_api_setting('linkedin_client_id') : '';
+$configuredAppUrl = Auth::hasRole('super_admin') ? get_system_setting('app_url', '') : '';
+$detectedAppUrl = app_url();
 
 include TEMPLATES_PATH . '/header.php';
 ?>

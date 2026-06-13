@@ -25,7 +25,7 @@ if (Auth::hasRole('super_admin')) {
 ?>
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header p-3 border-bottom">
-        <a href="<?= APP_URL ?>/admin/" class="text-decoration-none d-flex align-items-center">
+        <a href="<?= app_url() ?>/admin/" class="text-decoration-none d-flex align-items-center">
             <i class="bi bi-rocket-takeoff fs-4 text-primary me-2"></i>
             <span class="fw-bold sidebar-brand"><?= APP_NAME ?></span>
         </a>

@@ -11,9 +11,9 @@ $theme = get_setting('theme', 'light', Auth::id());
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="<?= APP_URL ?>/assets/css/app.css" rel="stylesheet">
+    <link href="<?= app_url() ?>/assets/css/app.css" rel="stylesheet">
     <?php if ($theme === 'dark'): ?>
-    <link href="<?= APP_URL ?>/assets/css/dark-theme.css" rel="stylesheet">
+    <link href="<?= app_url() ?>/assets/css/dark-theme.css" rel="stylesheet">
     <?php endif; ?>
 </head>
 <body>
@@ -36,9 +36,9 @@ $theme = get_setting('theme', 'light', Auth::id());
                         <span class="d-none d-md-inline"><?= Security::escape(Auth::user()['first_name'] . ' ' . Auth::user()['last_name']) ?></span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="<?= APP_URL ?>/admin/settings.php"><i class="bi bi-gear me-2"></i>Ayarlar</a></li>
+                        <li><a class="dropdown-item" href="<?= app_url() ?>/admin/settings.php"><i class="bi bi-gear me-2"></i>Ayarlar</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="<?= APP_URL ?>/admin/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Çıkış</a></li>
+                        <li><a class="dropdown-item text-danger" href="<?= app_url() ?>/admin/logout.php"><i class="bi bi-box-arrow-right me-2"></i>Çıkış</a></li>
                     </ul>
                 </div>
             </div>
