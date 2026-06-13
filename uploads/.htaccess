@@ -1,0 +1,11 @@
+# Prevent PHP execution in uploads
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+
+# Only allow media files
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|mp4|webm|pdf)$">
+    Require all granted
+</FilesMatch>
+
+Options -Indexes
